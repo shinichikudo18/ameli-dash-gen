@@ -397,10 +397,17 @@ def get_adguard_data():
             data = resp.json()
             if isinstance(data, list) and len(data) > 0:
                 current = data[0]
+                dns_arr = current.get("dns_queries", [])
+                block_arr = current.get("blocked_filtering", [])
+                total_dns = sum(dns_arr) if dns_arr else 0
+                total_blocked = sum(block_arr) if block_arr else 0
                 result["stats"] = {
-                    "dns_queries": current.get("dns_queries", 0),
-                    "blocked_filtering": current.get("blocked_filtering", 0),
-                    "cache_ratio": current.get("ratio", 0),
+                    "dns_queries": total_dns,
+                    "blocked_filtering": total_blocked,
+                    "num_dns_queries": current.get("num_dns_queries", 0),
+                    "num_blocked_filtering": current.get("num_blocked_filtering", 0),
+                    "block_rate": (total_blocked / total_dns * 100) if total_dns > 0 else 0,
+                    "avg_processing_time": current.get("avg_processing_time", 0),
                 }
             else:
                 result["stats"] = data
