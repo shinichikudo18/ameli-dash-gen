@@ -394,7 +394,16 @@ def get_adguard_data():
         
         resp = adguard_session.get(f"{ADGUARD_URL}/control/stats", timeout=10)
         if resp.status_code == 200:
-            result["stats"] = resp.json()
+            data = resp.json()
+            if isinstance(data, list) and len(data) > 0:
+                current = data[0]
+                result["stats"] = {
+                    "dns_queries": current.get("dns_queries", 0),
+                    "blocked_filtering": current.get("blocked_filtering", 0),
+                    "cache_ratio": current.get("ratio", 0),
+                }
+            else:
+                result["stats"] = data
     except Exception as e:
         logger.error(f"AdGuard error: {e}")
         result["error"] = str(e)
