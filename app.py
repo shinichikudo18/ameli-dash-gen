@@ -399,8 +399,8 @@ def get_adguard_data():
                 current = data[0]
                 dns_arr = current.get("dns_queries", [])
                 block_arr = current.get("blocked_filtering", [])
-                total_dns = sum(dns_arr) if dns_arr else 0
-                total_blocked = sum(block_arr) if block_arr else 0
+                total_dns = current.get("num_dns_queries") or (dns_arr[-1] if dns_arr else 0)
+                total_blocked = current.get("num_blocked_filtering") or (block_arr[-1] if block_arr else 0)
                 result["stats"] = {
                     "dns_queries": total_dns,
                     "blocked_filtering": total_blocked,
@@ -408,6 +408,8 @@ def get_adguard_data():
                     "num_blocked_filtering": current.get("num_blocked_filtering", 0),
                     "block_rate": (total_blocked / total_dns * 100) if total_dns > 0 else 0,
                     "avg_processing_time": current.get("avg_processing_time", 0),
+                    "history_dns_queries": dns_arr,
+                    "history_blocked_filtering": block_arr,
                 }
             else:
                 result["stats"] = data
@@ -812,6 +814,10 @@ def health():
 @app.route('/api/ucampus')
 def api_ucampus():
     return jsonify(check_ucampus())
+
+@app.route('/favicon.ico')
+def favicon():
+    return ('', 204)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
