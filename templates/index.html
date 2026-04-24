@@ -521,6 +521,16 @@
         function renderOverview() {
             const d = dashboardData;
             if (!d) return;
+            const apQuality = (d.access_points || []).reduce((acc, ap) => {
+                if (ap.overall_quality === 'Excellent' || ap.overall_quality === 'Good') acc.good += 1;
+                if (ap.overall_quality === 'Fair') acc.fair += 1;
+                if (ap.overall_quality === 'Poor') acc.poor += 1;
+                return acc;
+            }, { good: 0, fair: 0, poor: 0 });
+            const avgSignal = (d.access_points || []).length
+                ? Math.round((d.access_points || []).reduce((sum, ap) => sum + (ap.avg_signal || 0), 0) / (d.access_points || []).length)
+                : 0;
+            const u = unifiData || {};
             
             // Overview metrics
             document.getElementById('overviewMetrics').innerHTML = `
@@ -566,18 +576,38 @@
                 </div>
                 <div class="metric-card">
                     <div class="label">🔒 DNS Block</div>
-                    <div class="value red">${d.adguard?.stats?.blocked_filtering || 0}</div>
-                    <div class="sub">dominios</div>
+                    <div class="value red">${Number(d.adguard?.stats?.blocked_filtering || 0).toLocaleString()}</div>
+                    <div class="sub">${d.adguard?.stats?.block_rate ? d.adguard.stats.block_rate.toFixed(1) + '% tasa' : 'dominios'}</div>
                 </div>
                 <div class="metric-card">
                     <div class="label">🌐 uCampus</div>
-                    <div class="value green">${ucampusData?.status === 'online' ? 'ONLINE' : 'OFFLINE'}</div>
+                    <div class="value ${ucampusData?.status === 'online' ? 'green' : 'red'}">${ucampusData?.status === 'online' ? 'ONLINE' : 'OFFLINE'}</div>
                     <div class="sub">${ucampusData?.response_time || 0}ms</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">📡 Señal AP Avg</div>
+                    <div class="value ${avgSignal > -60 ? 'green' : avgSignal > -70 ? 'yellow' : 'red'}">${avgSignal} dBm</div>
+                    <div class="sub">promedio radio</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">✅ AP Quality</div>
+                    <div class="value green">${apQuality.good}</div>
+                    <div class="sub">good/excellent</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">⚠ AP Fair</div>
+                    <div class="value yellow">${apQuality.fair}</div>
+                    <div class="sub">calidad media</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">❌ AP Poor</div>
+                    <div class="value red">${apQuality.poor}</div>
+                    <div class="sub">calidad baja</div>
                 </div>
             `;
             
             // APs overview
-            let apsHtml = '<table><thead><tr><th>Nombre</th><th>Modelo</th><th>IP</th><th>Clientes</th><th>CPU</th><th>RAM</th><th>Uptime</th><th>Estado</th></tr></thead><tbody>';
+            let apsHtml = '<table><thead><tr><th>Nombre</th><th>Modelo</th><th>IP</th><th>Clientes</th><th>CPU</th><th>RAM</th><th>Uptime</th><th>2G Ch</th><th>5G Ch</th><th>Señal</th><th>Calidad</th><th>Estado</th></tr></thead><tbody>';
             (d.access_points || []).forEach(ap => {
                 const status = ap.state === 1 ? 'online' : 'offline';
                 apsHtml += `<tr>
@@ -588,6 +618,10 @@
                     <td>${ap.cpu}%</td>
                     <td>${ap.mem}%</td>
                     <td>${ap.uptime_formatted}</td>
+                    <td>${ap.channel_2g}</td>
+                    <td>${ap.channel_5g}</td>
+                    <td>${ap.avg_signal} dBm</td>
+                    <td>${ap.overall_quality}</td>
                     <td><span class="status-badge ${status}"><span class="dot"></span>${status.toUpperCase()}</span></td>
                 </tr>`;
             });
@@ -625,7 +659,7 @@
             document.getElementById('overviewNetworks').innerHTML = netHtml;
             
             // Clients overview
-            let clientHtml = '<table><thead><tr><th>Dispositivo</th><th>IP</th><th>MAC</th><th>AP</th><th>Señal</th><th>Canal</th></tr></thead><tbody>';
+            let clientHtml = '<table><thead><tr><th>Dispositivo</th><th>IP</th><th>MAC</th><th>AP</th><th>Señal</th><th>Canal</th><th>OS</th><th>WiFi</th></tr></thead><tbody>';
             (d.clients || []).slice(0, 50).forEach(c => {
                 clientHtml += `<tr>
                     <td><strong>${c.name}</strong></td>
@@ -634,6 +668,8 @@
                     <td>${c.ap_name}</td>
                     <td>${c.rssi} dBm (${c.signal})</td>
                     <td>${c.channel} (${c.freq})</td>
+                    <td>${c.os}</td>
+                    <td>${c.wired ? 'Wired' : 'Wireless'}</td>
                 </tr>`;
             });
             clientHtml += '</tbody></table>';
@@ -657,7 +693,13 @@
             const aps = unifiData?.access_points || [];
             if (!aps.length) { container.innerHTML = '<div class="empty-state">No hay Access Points</div>'; return; }
             
-            let html = '<table><thead><tr><th>Nombre</th><th>MAC</th><th>Modelo</th><th>Versión</th><th>IP</th><th>Estado</th><th>Clientes</th></tr></thead><tbody>';
+            let html = '<div class="metrics-grid">' +
+                `<div class="metric-card"><div class="label">APs</div><div class="value blue">${aps.length}</div><div class="sub">en UniFi</div></div>` +
+                `<div class="metric-card"><div class="label">Online</div><div class="value green">${aps.filter(a => a.state === 1).length}</div><div class="sub">activos</div></div>` +
+                `<div class="metric-card"><div class="label">Offline</div><div class="value red">${aps.filter(a => a.state !== 1).length}</div><div class="sub">caídos</div></div>` +
+                `<div class="metric-card"><div class="label">Clientes</div><div class="value yellow">${aps.reduce((s, a) => s + (a.num_sta || 0), 0)}</div><div class="sub">totales</div></div>` +
+                '</div>';
+            html += '<table><thead><tr><th>Nombre</th><th>MAC</th><th>Modelo</th><th>Versión</th><th>IP</th><th>Clientes</th><th>CPU</th><th>RAM</th><th>2G Ch</th><th>5G Ch</th><th>Señal</th><th>Calidad</th><th>Estado</th></tr></thead><tbody>';
             aps.forEach(ap => {
                 html += `<tr>
                     <td><strong>${ap.name}</strong></td>
@@ -665,8 +707,14 @@
                     <td>${ap.model}</td>
                     <td>${ap.version}</td>
                     <td>${ap.ip}</td>
-                    <td><span class="status-badge ${ap.state === 1 ? 'online' : 'offline'}"><span class="dot"></span>${ap.state === 1 ? 'ONLINE' : 'OFFLINE'}</span></td>
                     <td>${ap.num_sta}</td>
+                    <td>${ap.cpu}%</td>
+                    <td>${ap.mem}%</td>
+                    <td>${ap.channel_2g}</td>
+                    <td>${ap.channel_5g}</td>
+                    <td>${ap.avg_signal} dBm</td>
+                    <td>${ap.overall_quality}</td>
+                    <td><span class="status-badge ${ap.state === 1 ? 'online' : 'offline'}"><span class="dot"></span>${ap.state === 1 ? 'ONLINE' : 'OFFLINE'}</span></td>
                 </tr>`;
             });
             html += '</tbody></table>';
@@ -677,7 +725,12 @@
             const clients = unifiData?.clients || [];
             if (!clients.length) { container.innerHTML = '<div class="empty-state">No hay clientes</div>'; return; }
             
-            let html = '<table><thead><tr><th>Dispositivo</th><th>IP</th><th>MAC</th><th>AP</th><th>Señal</th><th>Canal</th><th>TX Rate</th><th>RX Rate</th></tr></thead><tbody>';
+            let html = '<div class="metrics-grid">' +
+                `<div class="metric-card"><div class="label">Clientes</div><div class="value blue">${clients.length}</div><div class="sub">activos</div></div>` +
+                `<div class="metric-card"><div class="label">Wired</div><div class="value green">${clients.filter(c => c.wired).length}</div><div class="sub">con cable</div></div>` +
+                `<div class="metric-card"><div class="label">Wireless</div><div class="value yellow">${clients.filter(c => !c.wired).length}</div><div class="sub">inalámbricos</div></div>` +
+                '</div>';
+            html += '<table><thead><tr><th>Dispositivo</th><th>IP</th><th>MAC</th><th>AP</th><th>Señal</th><th>Canal</th><th>TX Rate</th><th>RX Rate</th><th>OS</th><th>Tipo</th></tr></thead><tbody>';
             clients.forEach(c => {
                 html += `<tr>
                     <td><strong>${c.name}</strong></td>
@@ -688,6 +741,8 @@
                     <td>${c.channel}</td>
                     <td>${c.tx_rate} Mbps</td>
                     <td>${c.rx_rate} Mbps</td>
+                    <td>${c.os}</td>
+                    <td>${c.wired ? 'Wired' : 'Wireless'}</td>
                 </tr>`;
             });
             html += '</tbody></table>';
@@ -698,12 +753,20 @@
             const wifis = unifiData?.wifi_networks || [];
             if (!wifis.length) { container.innerHTML = '<div class="empty-state">No hay redes WiFi</div>'; return; }
             
-            let html = '<table><thead><tr><th>SSID</th><th> Seguridad</th><th>Habilitado</th></tr></thead><tbody>';
+            let html = '<div class="metrics-grid">' +
+                `<div class="metric-card"><div class="label">SSIDs</div><div class="value blue">${wifis.length}</div><div class="sub">configurados</div></div>` +
+                `<div class="metric-card"><div class="label">Broadcast On</div><div class="value green">${wifis.filter(w => w.broadcast).length}</div><div class="sub">difundiendo</div></div>` +
+                `<div class="metric-card"><div class="label">MAC Filter</div><div class="value yellow">${wifis.filter(w => w.mac_filter && w.mac_filter !== 'disabled').length}</div><div class="sub">activos</div></div>` +
+                '</div>';
+            html += '<table><thead><tr><th>SSID</th><th>Seguridad</th><th>Habilitado</th><th>Broadcast</th><th>Clientes</th><th>Filtro MAC</th></tr></thead><tbody>';
             wifis.forEach(w => {
                 html += `<tr>
                     <td><strong>${w.name}</strong></td>
                     <td>${w.security}</td>
                     <td>${w.enabled ? '✓' : '✗'}</td>
+                    <td>${w.broadcast ? '✓' : '✗'}</td>
+                    <td>${w.clients || 0}</td>
+                    <td>${w.mac_filter}</td>
                 </tr>`;
             });
             html += '</tbody></table>';
@@ -714,13 +777,21 @@
             const nets = unifiData?.networks || [];
             if (!nets.length) { container.innerHTML = '<div class="empty-state">No hay redes</div>'; return; }
             
-            let html = '<table><thead><tr><th>Nombre</th><th>VLAN</th><th>Subred</th><th>DHCP</th></tr></thead><tbody>';
+            let html = '<div class="metrics-grid">' +
+                `<div class="metric-card"><div class="label">Redes</div><div class="value blue">${nets.length}</div><div class="sub">LAN/VLAN</div></div>` +
+                `<div class="metric-card"><div class="label">DHCP On</div><div class="value green">${nets.filter(n => n.dhcp_enabled).length}</div><div class="sub">habilitadas</div></div>` +
+                '</div>';
+            html += '<table><thead><tr><th>Nombre</th><th>VLAN</th><th>Propósito</th><th>Subred</th><th>Gateway</th><th>DHCP</th><th>Inicio</th><th>Fin</th></tr></thead><tbody>';
             nets.forEach(n => {
                 html += `<tr>
                     <td><strong>${n.name}</strong></td>
                     <td>${n.vlan}</td>
+                    <td>${n.purpose}</td>
                     <td>${n.subnet}</td>
+                    <td>${n.gateway}</td>
                     <td>${n.dhcp_enabled ? '✓' : '✗'}</td>
+                    <td>${n.dhcp_start || '-'}</td>
+                    <td>${n.dhcp_stop || '-'}</td>
                 </tr>`;
             });
             html += '</tbody></table>';
@@ -731,7 +802,12 @@
             const ports = unifiData?.ports || [];
             if (!ports.length) { container.innerHTML = '<div class="empty-state">No hay puertos</div>'; return; }
             
-            let html = '<table><thead><tr><th>Puerto</th><th>Nombre</th><th>Estado</th><th>Velocidad</th><th>Duplex</th><th>RX</th><th>TX</th></tr></thead><tbody>';
+            let html = '<div class="metrics-grid">' +
+                `<div class="metric-card"><div class="label">Puertos</div><div class="value blue">${ports.length}</div><div class="sub">vistos</div></div>` +
+                `<div class="metric-card"><div class="label">Up</div><div class="value green">${ports.filter(p => p.up).length}</div><div class="sub">activos</div></div>` +
+                `<div class="metric-card"><div class="label">Down</div><div class="value red">${ports.filter(p => !p.up).length}</div><div class="sub">caídos</div></div>` +
+                '</div>';
+            html += '<table><thead><tr><th>Puerto</th><th>Nombre</th><th>Estado</th><th>Velocidad</th><th>Duplex</th><th>RX</th><th>TX</th><th>RX Err</th><th>TX Err</th></tr></thead><tbody>';
             ports.forEach(p => {
                 html += `<tr>
                     <td>${p.port_idx}</td>
@@ -741,6 +817,8 @@
                     <td>${p.full_duplex ? 'Full' : 'Half'}</td>
                     <td>${p.rx_bytes}</td>
                     <td>${p.tx_bytes}</td>
+                    <td>${p.rx_errors || 0}</td>
+                    <td>${p.tx_errors || 0}</td>
                 </tr>`;
             });
             html += '</tbody></table>';
