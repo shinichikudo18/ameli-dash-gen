@@ -545,6 +545,46 @@
             color: #8b949e;
         }
         
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #3fb950;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .ap-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .ap-mini-card {
+            background: #0d1117;
+            border-radius: 4px;
+            padding: 0.5rem;
+        }
+        
+        .ap-mini-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #e7e9ea;
+        }
+        
+        .ap-mini-stat {
+            font-size: 0.625rem;
+            color: #8b949e;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
         .hidden {
             display: none !important;
         }
@@ -565,14 +605,11 @@
     <header class="header">
         <div class="logo">
             <h1>AMELI</h1>
-            <span>Dashboard ESFORPEN</span>
+            <span>Dashboard ESFORPEN - WiFi Monitoring</span>
         </div>
         <div style="display: flex; align-items: center; gap: 1rem;">
             <span class="last-update" id="lastUpdate">Última actualización: --</span>
-            <button class="refresh-btn" onclick="loadData()">
-                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/></svg>
-                Actualizar
-            </button>
+            <span class="status-dot" id="statusDot" title="Actualizando..."></span>
         </div>
     </header>
     
@@ -597,16 +634,22 @@
         
         <div id="overviewContent">
             <div class="stats-grid" id="statsGrid"></div>
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">📡 Access Points</div>
+                </div>
+                <div class="section-body" id="quickAPsContent"></div>
+            </div>
             <div class="grid-2">
                 <div class="section">
                     <div class="section-header">
-                        <div class="section-title">Estado de Redes</div>
+                        <div class="section-title">🏢 Redes VLAN</div>
                     </div>
                     <div class="section-body" id="networksContent"></div>
                 </div>
                 <div class="section">
                     <div class="section-header">
-                        <div class="section-title">SD-WAN Links</div>
+                        <div class="section-title">🌐 SD-WAN Links</div>
                     </div>
                     <div class="section-body" id="sdwanContent"></div>
                 </div>
@@ -617,7 +660,7 @@
             <div class="section">
                 <div class="section-header">
                     <div class="section-title">
-                        <span>📡</span> UniFi
+                        <span>📡</span> UniFi - Access Points
                     </div>
                     <div class="tabs">
                         <button class="tab active" onclick="switchTab('unifi', 'aps')">Access Points</button>
@@ -625,15 +668,6 @@
                         <button class="tab" onclick="switchTab('unifi', 'wifi')">Redes WiFi</button>
                         <button class="tab" onclick="switchTab('unifi', 'networks')">Redes LAN</button>
                         <button class="tab" onclick="switchTab('unifi', 'ports')">Puertos</button>
-                    </div>
-                </div>
-                <div class="section-body" id="unifiMainContent"></div>
-            </div>
-        </div>
-                    <div class="tabs">
-                        <button class="tab active" onclick="switchTab('unifi', 'aps')">Detalles</button>
-                        <button class="tab" onclick="switchTab('unifi', 'clients')">Clientes</button>
-                        <button class="tab" onclick="switchTab('unifi', 'wifi')">Redes WiFi</button>
                     </div>
                 </div>
                 <div class="section-body" id="unifiMainContent"></div>
@@ -690,12 +724,16 @@
         let adguardData = null;
         let ucampusData = null;
         let charts = {};
+        let isLoading = false;
         
         async function loadData() {
-            const btn = document.querySelector('.refresh-btn');
-            btn.classList.add('loading');
+            if (isLoading) return;
+            isLoading = true;
             
             try {
+                const dot = document.getElementById('statusDot');
+                if (dot) dot.style.opacity = '0.5';
+                
                 const [dashRes, unifiRes, fgRes, adRes, ucRes] = await Promise.all([
                     fetch('/api/dashboard'),
                     fetch('/api/unifi'),
@@ -713,13 +751,15 @@
                 ucampusData = await ucRes.json();
                 
                 document.getElementById('lastUpdate').textContent = 
-                    'Última actualización: ' + new Date().toLocaleTimeString('es-ES');
+                    new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                
+                if (dot) dot.style.opacity = '1';
                 
                 renderCurrentTab();
             } catch (error) {
                 console.error('Error:', error);
             } finally {
-                btn.classList.remove('loading');
+                isLoading = false;
             }
         }
         
@@ -783,34 +823,69 @@
             
             document.getElementById('statsGrid').innerHTML = `
                 <div class="stat-card">
-                    <div class="label">Clientes WiFi</div>
+                    <div class="label">📡 Clientes WiFi</div>
                     <div class="value" id="totalClients">${data.summary.total_clients}</div>
-                    <div class="sub">Conectados</div>
+                    <div class="sub">Conectados ahora</div>
                 </div>
                 <div class="stat-card">
-                    <div class="label">Access Points</div>
+                    <div class="label">🔵 Access Points</div>
                     <div class="value green">${data.summary.connected_aps}</div>
-                    <div class="sub">de ${data.summary.total_aps} APs</div>
+                    <div class="sub">de ${data.summary.total_aps} activos</div>
                 </div>
                 <div class="stat-card">
-                    <div class="label">Redes WiFi</div>
+                    <div class="label">📶 Redes WiFi</div>
                     <div class="value">${data.summary.total_wifis}</div>
-                    <div class="sub">Configuradas</div>
+                    <div class="sub">SSIDs configurados</div>
                 </div>
                 <div class="stat-card">
-                    <div class="label">Tráfico Total</div>
-                    <div class="value" style="font-size: 1.25rem;">${data.summary.total_rx} / ${data.summary.total_tx}</div>
-                    <div class="sub">RX / TX</div>
+                    <div class="label">🏢 Redes LAN</div>
+                    <div class="value">${data.summary.total_networks}</div>
+                    <div class="sub">VLANs configuradas</div>
                 </div>
                 <div class="stat-card">
-                    <div class="label">FortiGate CPU</div>
-                    <div class="value" style="font-size: 1.25rem;">${data.fortigate.system?.cpu_usage || '--'}%</div>
-                    <div class="sub">Mem: ${data.fortigate.system?.mem_usage || '--'}%</div>
+                    <div class="label">📊 Tráfico</div>
+                    <div class="value" style="font-size: 1rem;">⬇ ${data.summary.total_rx}</div>
+                    <div class="sub">⬆ ${data.summary.total_tx}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">🛡️ FortiGate</div>
+                    <div class="value" style="font-size: 1rem;">CPU ${data.fortigate.system?.cpu_usage || '--'}%</div>
+                    <div class="sub">Mem ${data.fortigate.system?.mem_usage || '--'}%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">🔒 DNS Bloqueados</div>
+                    <div class="value red">${data.adguard?.stats?.blocked_filtering || 0}</div>
+                    <div class="sub">queries bloqueadas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">🌐 uCampus</div>
+                    <div class="value green">ONLINE</div>
+                    <div class="sub">sitio respondiendo</div>
                 </div>
             `;
             
             renderNetworks();
             renderSDWAN();
+            renderQuickAPs();
+        }
+        
+        function renderQuickAPs() {
+            const aps = dashboardData?.access_points || [];
+            if (!aps.length) return;
+            
+            let html = '<div class="ap-grid">';
+            aps.slice(0, 6).forEach(ap => {
+                const statusColor = ap.state === 1 ? '#3fb950' : '#f85149';
+                html += `
+                <div class="ap-mini-card" style="border-left: 3px solid ${statusColor}">
+                    <div class="ap-mini-name">${ap.name}</div>
+                    <div class="ap-mini-stat"><span class="dot" style="background:${statusColor}"></span> ${ap.num_sta} clientes</div>
+                </div>`;
+            });
+            html += '</div>';
+            
+            const existing = document.getElementById('quickAPsContent');
+            if (existing) existing.innerHTML = html;
         }
         
         function renderNetworks() {
@@ -1188,7 +1263,7 @@
             `;
         }
         
-        setInterval(loadData, 30000);
+        setInterval(loadData, 15000);
         loadData();
     </script>
 </body>
