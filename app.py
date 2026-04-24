@@ -789,17 +789,9 @@ def check_ucampus():
     UCAMPUS_CACHE["timestamp"] = time.time()
     return result
 
-@app.route('/api/ucampus')
-def api_ucampus():
-    return jsonify(check_ucampus())
-
 @app.route('/api/health')
 def health():
     return jsonify({"status": "ok", "timestamp": datetime.now().isoformat()})
-
-@app.route('/api/ucampus')
-def api_ucampus_status():
-    return jsonify(check_ucampus())
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
