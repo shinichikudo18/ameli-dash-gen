@@ -857,31 +857,32 @@
         
         function renderAdGuard() {
             const stats = adguardData?.data?.stats || {};
-            const blocked = stats.blocked_filtering || 0;
-            const total = stats.dns_queries || 1;
-            const pct = ((blocked / total) * 100).toFixed(1);
+            const total = stats.num_dns_queries || 0;
+            const blocked = stats.num_blocked_filtering || 0;
+            const pct = total > 0 ? ((blocked / total) * 100).toFixed(1) : 0;
             
             document.getElementById('adguardMetrics').innerHTML = `
                 <div class="metric-card">
-                    <div class="label">DNS Queries</div>
-                    <div class="value blue">${stats.dns_queries || 0}</div>
-                    <div class="sub">total</div>
+                    <div class="label">DNS Queries Total</div>
+                    <div class="value blue">${total.toLocaleString()}</div>
+                    <div class="sub">histórico</div>
                 </div>
                 <div class="metric-card">
-                    <div class="label">Blocked</div>
-                    <div class="value red">${blocked}</div>
-                    <div class="sub">filtradas</div>
+                    <div class="label">Blocked Total</div>
+                    <div class="value red">${blocked.toLocaleString()}</div>
+                    <div class="sub">histórico</div>
                 </div>
                 <div class="metric-card">
                     <div class="label">Block Rate</div>
                     <div class="value yellow">${pct}%</div>
-                    <div class="sub">del total</div>
+                    <div class="sub">tasa bloqueo</div>
                 </div>
                 <div class="metric-card">
-                    <div class="label">Cache</div>
-                    <div class="value green">${(stats.cache_ratio || 0).toFixed(1)}%</div>
-                    <div class="sub">efectividad</div>
+                    <div class="label">Avg Time</div>
+                    <div class="value green">${(stats.avg_processing_time || 0).toFixed(3)}ms</div>
+                    <div class="sub">por query</div>
                 </div>
+            `;
             `;
         }
         
