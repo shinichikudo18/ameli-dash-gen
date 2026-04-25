@@ -879,10 +879,10 @@
                 `<div class="metric-card"><div class="label">Avg SLA</div><div class="value blue">${Math.round(links.reduce((s, l) => s + (l.sla || 0), 0) / links.length)}%</div><div class="sub">promedio</div></div>` +
                 '</div>';
             html += '<table><thead><tr><th>Nombre</th><th>Interfaz</th><th>Estado</th><th>Latencia</th><th>Jitter</th><th>Pérdida</th><th>BW In</th><th>BW Out</th><th>BW Bi</th><th>SLA</th></tr></thead><tbody>';
-            links.forEach(l => {
+            links.forEach((l, i) => {
                 const statusClass = l.state === 'Up' ? 'online' : l.state === 'Standby' ? 'warning' : 'offline';
                 const slaClass = l.sla >= 90 ? 'online' : l.sla >= 75 ? 'warning' : 'offline';
-                html += `<tr>
+                html += `<tr onclick="showSDWANDetail(i)" style="cursor:pointer;">
                     <td><strong>${l.name}</strong></td>
                     <td>${l.interface}</td>
                     <td><span class="status-badge ${statusClass}"><span class="dot"></span>${l.state}</span></td>
@@ -896,9 +896,32 @@
                 </tr>`;
             });
             html += '</tbody></table>';
-            container.innerHTML = html;
+            container.innerHTML = html + '<div id="sdwan-detail-panel" style="display:none;margin-top:20px;padding:20px;background:#1e1e1e;border-radius:8px;border-left:4px solid #00a0ff;"><h3 id="detail-title" style="margin-top:0;color:#fff;"></h3><div id="detail-content"></div><button onclick="document.getElementById(\'sdwan-detail-panel\').style.display=\'none\'" style="margin-top:15px;padding:8px 16px;background:#333;color:#fff;border:none;border-radius:4px;cursor:pointer;">Cerrar</button></div>';
         }
         
+        function showSDWANDetail(idx) {
+            var link = fortigateData?.sdwan?.[idx];
+            if (!link) return;
+            var panel = document.getElementById('sdwan-detail-panel');
+            document.getElementById('detail-title').innerHTML = 'Detalle: ' + link.name;
+            document.getElementById('detail-content').innerHTML = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:15px;">'+
+                '<div style="background:#252525;padding:15px;border-radius:5px;"><h4 style="color:#00a0ff;margin:0 0 10px 0;">Info General</h4>'+
+                '<p style="margin:5px 0;color:#888;">ID: <span style="color:#fff;">'+(link.id||'-')+'</span></p>'+
+                '<p style="margin:5px 0;color:#888;">Zone: <span style="color:#fff;">'+(link.zone||'-')+'</span></p>'+
+                '<p style="margin:5px 0;color:#888;">Service: <span style="color:#fff;">'+(link.service||'-')+'</span></p>'+
+                '<p style="margin:5px 0;color:#888;">Priority: <span style="color:#fff;">'+(link.priority||'-')+'</span></p></div>'+
+                '<div style="background:#252525;padding:15px;border-radius:5px;"><h4 style="color:#00a0ff;margin:0 0 10px 0;">Metrics</h4>'+
+                '<p style="margin:5px 0;color:#888;">Latencia: <span style="color:#fff;">'+link.latency+' ms</span></p>'+
+                '<p style="margin:5px 0;color:#888;">Jitter: <span style="color:#fff;">'+link.jitter+' ms</span></p>'+
+                '<p style="margin:5px 0;color:#888;">Packet Loss: <span style="color:#fff;">'+link.packet_loss+'%</span></p>'+
+                '<p style="margin:5px 0;color:#888;">SDA: <span style="color:'+(link.sla>=90?'#4caf50':'#ff9800')+';">'+link.sla+'%</span></p></div>'+
+                '<div style="background:#252525;padding:15px;border-radius:5px;grid-column:span 2;"><h4 style="color:#00a0ff;margin:0 0 10px 0;">Bandwidth</h4>'+
+                '<p style="margin:5px 0;color:#888;">In: <span style="color:#fff;">'+formatBandwidth(link.bandwidth_in)+'</span></p>'+
+                '<p style="margin:5px 0;color:#888;">Out: <span style="color:#fff;">'+formatBandwidth(link.bandwidth_out)+'</span></p>'+
+                '<p style="margin:5px 0;color:#888;">Bi: <span style="color:#fff;">'+formatBandwidth(link.bandwidth_bi)+'</span></p></div></div>';
+            panel.style.display = 'block';
+        }
+
         function renderDHCP(container) {
             const servers = fortigateData?.dhcp || [];
             if (!servers.length) { container.innerHTML = '<div class="empty-state">No hay servidores DHCP</div>'; return; }
