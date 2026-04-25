@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+venv/
+*.log
+*.db
+.DS_Store
+node_modules/
+package-lock.json
+yarn.lock

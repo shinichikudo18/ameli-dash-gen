@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMELI - NOC Dashboard ESFORPEN</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-primary: #0a0e14;
+            --bg-secondary: #0d1117;
+            --bg-tertiary: #161b22;
+            --bg-card: #1a1f2e;
+            --border: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-red: #f85149;
+            --accent-yellow: #d29922;
+            --accent-orange: #f0883e;
+            --accent-purple: #a371f7;
+        }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        
+        .noc-header {
+            background: linear-gradient(180deg, #0d1117 0%, #06090d 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .noc-header .brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .noc-header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            letter-spacing: 2px;
+        }
+        
+        .noc-header .subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        .noc-header .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            font-size: 0.75rem;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        
+        .last-update {
+            color: var(--text-muted);
+        }
+        
+        .container {
+            max-width: 100%;
+            padding: 1rem;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            gap: 0.25rem;
+            background: var(--bg-secondary);
+            padding: 0.25rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            overflow-x: auto;
+        }
+        
+        .nav-tab {
+            padding: 0.5rem 1.25rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        
+        .nav-tab.active {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+        
+        .nav-tab:hover:not(.active) {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .metric-card .label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-card .value {
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+        
+        .metric-card .value.green { color: var(--accent-green); }
+        .metric-card .value.red { color: var(--accent-red); }
+        .metric-card .value.yellow { color: var(--accent-yellow); }
+        .metric-card .value.blue { color: var(--accent-blue); }
+        .metric-card .value.orange { color: var(--accent-orange); }
+        
+        .metric-card .sub {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+        
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+        
+        .section-header {
+            background: var(--bg-secondary);
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .section-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .section-tabs {
+            display: flex;
+            gap: 0.25rem;
+        }
+        
+        .section-tab {
+            padding: 0.35rem 0.75rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        
+        .section-tab.active {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+        
+        .section-body {
+            padding: 0;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+        }
+        
+        th, td {
+            padding: 0.6rem 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-secondary);
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.65rem;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover td {
+            background: rgba(88, 166, 255, 0.05);
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.65rem;
+            font-weight: 600;
+        }
+        
+        .status-badge.online {
+            background: rgba(63, 185, 80, 0.15);
+            color: var(--accent-green);
+        }
+        
+        .status-badge.offline {
+            background: rgba(248, 81, 73, 0.15);
+            color: var(--accent-red);
+        }
+        
+        .status-badge.warning {
+            background: rgba(210, 153, 34, 0.15);
+            color: var(--accent-yellow);
+        }
+        
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+        
+        .ap-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .ap-card .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+        
+        .ap-card .name {
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        
+        .ap-card .meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 0.5rem;
+            font-size: 0.7rem;
+        }
+        
+        .ap-card .meta-item {
+            text-align: center;
+        }
+        
+        .ap-card .meta-label {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+        }
+        
+        .ap-card .meta-value {
+            font-weight: 600;
+            color: var(--accent-blue);
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+        
+        @media (max-width: 1200px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header class="noc-header">
+        <div class="brand">
+            <h1>AMELI</h1>
+            <span class="subtitle">NOC DASHBOARD // ESFORPEN</span>
+        </div>
+        <div class="status-bar">
+            <div class="status-indicator">
+                <span class="status-dot" id="statusDot"></span>
+                <span>LIVE</span>
+            </div>
+            <span class="last-update" id="lastUpdate">--:--:--</span>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="switchTab('overview')">📊 RESUMEN</button>
+            <button class="nav-tab" onclick="switchTab('unifi')">📡 UNIFI</button>
+            <button class="nav-tab" onclick="switchTab('fortigate')">🛡️ FORTIGATE</button>
+            <button class="nav-tab" onclick="switchTab('adguard')">🔒 ADGUARD</button>
+            <button class="nav-tab" onclick="switchTab('ucampus')">🌐 UCAMPUS</button>
+        </div>
+        
+        <!-- RESUMEN NOC VIEW -->
+        <div id="overviewTab" class="tab-content active">
+            <div class="metrics-grid" id="overviewMetrics"></div>
+            <div class="grid-2">
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">📡 ACCESS POINTS</div>
+                    </div>
+                    <div class="section-body" id="overviewAPs"></div>
+                </div>
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">🌐 SD-WAN LINKS</div>
+                    </div>
+                    <div class="section-body" id="overviewSDWAN"></div>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">🏢 REDES VLAN</div>
+                    </div>
+                    <div class="section-body" id="overviewNetworks"></div>
+                </div>
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">📱 CLIENTES CONECTADOS</div>
+                    </div>
+                    <div class="section-body" id="overviewClients"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- UNIFI DETAILED -->
+        <div id="unifiTab" class="tab-content">
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">📡 UNIFI CONTROLLER</div>
+                    <div class="section-tabs">
+                        <button class="section-tab active" onclick="switchSection('unifi', 'aps')">APs</button>
+                        <button class="section-tab" onclick="switchSection('unifi', 'clients')">Clientes</button>
+                        <button class="section-tab" onclick="switchSection('unifi', 'wifi')">WiFi</button>
+                        <button class="section-tab" onclick="switchSection('unifi', 'networks')">VLANs</button>
+                        <button class="section-tab" onclick="switchSection('unifi', 'ports')">Puertos</button>
+                    </div>
+                </div>
+                <div class="section-body" id="unifiContent"></div>
+            </div>
+        </div>
+        
+        <!-- FORTIGATE DETAILED -->
+        <div id="fortigateTab" class="tab-content">
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">🛡️ FORTIGATE FIREWALL</div>
+                    <div class="section-tabs">
+                        <button class="section-tab active" onclick="switchSection('fortigate', 'interfaces')">Interfaces</button>
+                        <button class="section-tab" onclick="switchSection('fortigate', 'sdwan')">SD-WAN</button>
+                        <button class="section-tab" onclick="switchSection('fortigate', 'dhcp')">DHCP</button>
+                        <button class="section-tab" onclick="switchSection('fortigate', 'switches')">Switches</button>
+                        <button class="section-tab" onclick="switchSection('fortigate', 'system')">Sistema</button>
+                    </div>
+                </div>
+                <div class="section-body" id="fortigateContent"></div>
+            </div>
+        </div>
+        
+        <!-- ADGUARD -->
+        <div id="adguardTab" class="tab-content">
+            <div class="metrics-grid" id="adguardMetrics"></div>
+        </div>
+        
+        <!-- UCAMPUS -->
+        <div id="ucampusTab" class="tab-content">
+            <div class="metrics-grid" id="ucampusMetrics"></div>
+        </div>
+    </div>
+    
+    <script>
+        let currentMainTab = 'overview';
+        let currentSection = { unifi: 'aps', fortigate: 'interfaces' };
+        let dashboardData = null;
+        let unifiData = null;
+        let fortigateData = null;
+        let adguardData = null;
+        let ucampusData = null;
+        let loading = false;
+        
+        async function loadData() {
+            if (loading) return;
+            loading = true;
+            
+            try {
+                const [d, u, f, a, c] = await Promise.all([
+                    fetch('/api/dashboard'),
+                    fetch('/api/unifi'),
+                    fetch('/api/fortigate'),
+                    fetch('/api/adguard'),
+                    fetch('/api/ucampus')
+                ]);
+                
+                dashboardData = await d.json();
+                unifiData = await u.json();
+                fortigateData = await f.json();
+                adguardData = await a.json();
+                ucampusData = await c.json();
+                
+                document.getElementById('lastUpdate').textContent = 
+                    new Date().toLocaleTimeString('es-ES');
+                
+                renderCurrentTab();
+            } catch (e) {
+                console.error('Error:', e);
+            } finally {
+                loading = false;
+            }
+        }
+        
+        function switchTab(tab) {
+            currentMainTab = tab;
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById(tab + 'Tab').classList.add('active');
+            renderCurrentTab();
+        }
+        
+        function switchSection(main, section) {
+            currentSection[main] = section;
+            const tab = document.getElementById(main + 'Tab');
+            tab.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            renderCurrentTab();
+        }
+
+        function formatBandwidth(value) {
+            if (value === null || value === undefined || value === '' || value === 'N/A') return 'N/A';
+            const num = Number(value);
+            if (Number.isNaN(num)) return value;
+            return num >= 1000 ? `${(num / 1000).toFixed(1)} Mbps` : `${num} kbps`;
+        }
+        
+        function renderCurrentTab() {
+            switch(currentMainTab) {
+                case 'overview': renderOverview(); break;
+                case 'unifi': renderUniFi(); break;
+                case 'fortigate': renderFortiGate(); break;
+                case 'adguard': renderAdGuard(); break;
+                case 'ucampus': renderUCampus(); break;
+            }
+        }
+        
+        function renderOverview() {
+            const d = dashboardData;
+            if (!d) return;
+            const apQuality = (d.access_points || []).reduce((acc, ap) => {
+                if (ap.overall_quality === 'Excellent' || ap.overall_quality === 'Good') acc.good += 1;
+                if (ap.overall_quality === 'Fair') acc.fair += 1;
+                if (ap.overall_quality === 'Poor') acc.poor += 1;
+                return acc;
+            }, { good: 0, fair: 0, poor: 0 });
+            const avgSignal = (d.access_points || []).length
+                ? Math.round((d.access_points || []).reduce((sum, ap) => sum + (ap.avg_signal || 0), 0) / (d.access_points || []).length)
+                : 0;
+            const u = unifiData || {};
+            
+            // Overview metrics
+            document.getElementById('overviewMetrics').innerHTML = `
+                <div class="metric-card">
+                    <div class="label">📱 Clientes WiFi</div>
+                    <div class="value blue">${d.summary.total_clients}</div>
+                    <div class="sub">conectados ahora</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">🔵 APs Activos</div>
+                    <div class="value green">${d.summary.connected_aps}</div>
+                    <div class="sub">de ${d.summary.total_aps} total</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">📶 SSIDs</div>
+                    <div class="value">${d.summary.total_wifis}</div>
+                    <div class="sub">redes WiFi</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">🏢 VLANs</div>
+                    <div class="value">${d.summary.total_networks}</div>
+                    <div class="sub">redes configuradas</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">⬇ RX</div>
+                    <div class="value green">${d.summary.total_rx}</div>
+                    <div class="sub">recibido</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">⬆ TX</div>
+                    <div class="value orange">${d.summary.total_tx}</div>
+                    <div class="sub">enviado</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">🛡️ CPU</div>
+                    <div class="value">${d.fortigate?.system?.cpu_usage || '--'}%</div>
+                    <div class="sub">FortiGate</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">💾 RAM</div>
+                    <div class="value">${d.fortigate?.system?.mem_usage || '--'}%</div>
+                    <div class="sub">FortiGate</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">🔒 DNS Block</div>
+                    <div class="value red">${Number(d.adguard?.stats?.num_blocked_filtering || 0).toLocaleString()}</div>
+                    <div class="sub">${d.adguard?.stats?.block_rate ? d.adguard.stats.block_rate.toFixed(1) + '% tasa' : 'dominios'}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">🌐 uCampus</div>
+                    <div class="value ${ucampusData?.status === 'online' ? 'green' : 'red'}">${ucampusData?.status === 'online' ? 'ONLINE' : 'OFFLINE'}</div>
+                    <div class="sub">${ucampusData?.response_time || 0}ms</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">📡 Señal AP Avg</div>
+                    <div class="value ${avgSignal > -60 ? 'green' : avgSignal > -70 ? 'yellow' : 'red'}">${avgSignal} dBm</div>
+                    <div class="sub">promedio radio</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">✅ AP Quality</div>
+                    <div class="value green">${apQuality.good}</div>
+                    <div class="sub">good/excellent</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">⚠ AP Fair</div>
+                    <div class="value yellow">${apQuality.fair}</div>
+                    <div class="sub">calidad media</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">❌ AP Poor</div>
+                    <div class="value red">${apQuality.poor}</div>
+                    <div class="sub">calidad baja</div>
+                </div>
+            `;
+            
+            // APs overview
+            let apsHtml = '<table><thead><tr><th>Nombre</th><th>Modelo</th><th>IP</th><th>Clientes</th><th>CPU</th><th>RAM</th><th>Uptime</th><th>2G Ch</th><th>5G Ch</th><th>Señal</th><th>Calidad</th><th>Estado</th></tr></thead><tbody>';
+            (d.access_points || []).forEach(ap => {
+                const status = ap.state === 1 ? 'online' : 'offline';
+                apsHtml += `<tr>
+                    <td><strong>${ap.name}</strong></td>
+                    <td>${ap.model_display}</td>
+                    <td>${ap.ip}</td>
+                    <td>${ap.num_sta}</td>
+                    <td>${ap.cpu}%</td>
+                    <td>${ap.mem}%</td>
+                    <td>${ap.uptime_formatted}</td>
+                    <td>${ap.channel_2g}</td>
+                    <td>${ap.channel_5g}</td>
+                    <td>${ap.avg_signal} dBm</td>
+                    <td>${ap.overall_quality}</td>
+                    <td><span class="status-badge ${status}"><span class="dot"></span>${status.toUpperCase()}</span></td>
+                </tr>`;
+            });
+            apsHtml += '</tbody></table>';
+            document.getElementById('overviewAPs').innerHTML = apsHtml;
+            
+            // SD-WAN overview
+            let sdwanHtml = '<table><thead><tr><th>Nombre</th><th>Interfaz</th><th>Estado</th><th>Latencia</th><th>Jitter</th><th>Pérdida</th><th>BW In</th><th>BW Out</th><th>BW Bi</th><th>SLA</th></tr></thead><tbody>';
+            (d.fortigate?.sdwan || []).forEach(link => {
+                const statusClass = link.state === 'Up' ? 'online' : link.state === 'Standby' ? 'warning' : 'offline';
+                const slaClass = link.sla >= 90 ? 'online' : link.sla >= 75 ? 'warning' : 'offline';
+                sdwanHtml += `<tr>
+                    <td><strong>${link.name}</strong></td>
+                    <td>${link.interface}</td>
+                    <td><span class="status-badge ${statusClass}"><span class="dot"></span>${link.state}</span></td>
+                    <td>${link.latency}ms</td>
+                    <td>${link.jitter}ms</td>
+                    <td>${link.packet_loss}%</td>
+                    <td>${formatBandwidth(link.bandwidth_in)}</td>
+                    <td>${formatBandwidth(link.bandwidth_out)}</td>
+                    <td>${formatBandwidth(link.bandwidth_bi)}</td>
+                    <td><span class="status-badge ${slaClass}"><span class="dot"></span>${link.sla}%</span></td>
+                </tr>`;
+            });
+            sdwanHtml += '</tbody></table>';
+            document.getElementById('overviewSDWAN').innerHTML = sdwanHtml;
+            
+            // Networks overview
+            let netHtml = '<table><thead><tr><th>Nombre</th><th>VLAN</th><th>Subred</th><th>Gateway</th><th>DHCP</th></tr></thead><tbody>';
+            (d.networks || []).forEach(net => {
+                netHtml += `<tr>
+                    <td><strong>${net.name}</strong></td>
+                    <td>${net.vlan}</td>
+                    <td>${net.subnet}</td>
+                    <td>${net.gateway}</td>
+                    <td>${net.dhcp_enabled ? '✓' : '✗'}</td>
+                </tr>`;
+            });
+            netHtml += '</tbody></table>';
+            document.getElementById('overviewNetworks').innerHTML = netHtml;
+            
+            // Clients overview
+            let clientHtml = '<table><thead><tr><th>Dispositivo</th><th>IP</th><th>MAC</th><th>AP</th><th>Señal</th><th>Canal</th><th>OS</th><th>WiFi</th></tr></thead><tbody>';
+            (d.clients || []).slice(0, 50).forEach(c => {
+                clientHtml += `<tr>
+                    <td><strong>${c.name}</strong></td>
+                    <td>${c.ip}</td>
+                    <td>${c.mac}</td>
+                    <td>${c.ap_name}</td>
+                    <td>${c.rssi} dBm (${c.signal})</td>
+                    <td>${c.channel} (${c.freq})</td>
+                    <td>${c.os}</td>
+                    <td>${c.wired ? 'Wired' : 'Wireless'}</td>
+                </tr>`;
+            });
+            clientHtml += '</tbody></table>';
+            document.getElementById('overviewClients').innerHTML = clientHtml;
+        }
+        
+        function renderUniFi() {
+            const section = currentSection['unifi'];
+            const container = document.getElementById('unifiContent');
+            
+            switch(section) {
+                case 'aps': renderAPs(container); break;
+                case 'clients': renderClients(container); break;
+                case 'wifi': renderWiFi(container); break;
+                case 'networks': renderNetworks(container); break;
+                case 'ports': renderPorts(container); break;
+            }
+        }
+        
+        function renderAPs(container) {
+            const aps = unifiData?.access_points || [];
+            if (!aps.length) { container.innerHTML = '<div class="empty-state">No hay Access Points</div>'; return; }
+            
+            let html = '<div class="metrics-grid">' +
+                `<div class="metric-card"><div class="label">APs</div><div class="value blue">${aps.length}</div><div class="sub">en UniFi</div></div>` +
+                `<div class="metric-card"><div class="label">Online</div><div class="value green">${aps.filter(a => a.state === 1).length}</div><div class="sub">activos</div></div>` +
+                `<div class="metric-card"><div class="label">Offline</div><div class="value red">${aps.filter(a => a.state !== 1).length}</div><div class="sub">caídos</div></div>` +
+                `<div class="metric-card"><div class="label">Clientes</div><div class="value yellow">${aps.reduce((s, a) => s + (a.num_sta || 0), 0)}</div><div class="sub">totales</div></div>` +
+                '</div>';
+            html += '<table><thead><tr><th>Nombre</th><th>MAC</th><th>Modelo</th><th>Versión</th><th>IP</th><th>Clientes</th><th>CPU</th><th>RAM</th><th>2G Ch</th><th>5G Ch</th><th>Señal</th><th>Calidad</th><th>Estado</th></tr></thead><tbody>';
+            aps.forEach(ap => {
+                html += `<tr>
+                    <td><strong>${ap.name}</strong></td>
+                    <td>${ap.mac}</td>
+                    <td>${ap.model}</td>
+                    <td>${ap.version}</td>
+                    <td>${ap.ip}</td>
+                    <td>${ap.num_sta}</td>
+                    <td>${ap.cpu}%</td>
+                    <td>${ap.mem}%</td>
+                    <td>${ap.channel_2g}</td>
+                    <td>${ap.channel_5g}</td>
+                    <td>${ap.avg_signal} dBm</td>
+                    <td>${ap.overall_quality}</td>
+                    <td><span class="status-badge ${ap.state === 1 ? 'online' : 'offline'}"><span class="dot"></span>${ap.state === 1 ? 'ONLINE' : 'OFFLINE'}</span></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        function renderClients(container) {
+            const clients = unifiData?.clients || [];
+            if (!clients.length) { container.innerHTML = '<div class="empty-state">No hay clientes</div>'; return; }
+            
+            let html = '<div class="metrics-grid">' +
+                `<div class="metric-card"><div class="label">Clientes</div><div class="value blue">${clients.length}</div><div class="sub">activos</div></div>` +
+                `<div class="metric-card"><div class="label">Wired</div><div class="value green">${clients.filter(c => c.wired).length}</div><div class="sub">con cable</div></div>` +
+                `<div class="metric-card"><div class="label">Wireless</div><div class="value yellow">${clients.filter(c => !c.wired).length}</div><div class="sub">inalámbricos</div></div>` +
+                '</div>';
+            html += '<table><thead><tr><th>Dispositivo</th><th>IP</th><th>MAC</th><th>AP</th><th>Señal</th><th>Canal</th><th>TX Rate</th><th>RX Rate</th><th>OS</th><th>Tipo</th></tr></thead><tbody>';
+            clients.forEach(c => {
+                html += `<tr>
+                    <td><strong>${c.name}</strong></td>
+                    <td>${c.ip}</td>
+                    <td>${c.mac}</td>
+                    <td>${c.ap_mac}</td>
+                    <td>${c.rssi} dBm</td>
+                    <td>${c.channel}</td>
+                    <td>${c.tx_rate} Mbps</td>
+                    <td>${c.rx_rate} Mbps</td>
+                    <td>${c.os}</td>
+                    <td>${c.wired ? 'Wired' : 'Wireless'}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        function renderWiFi(container) {
+            const wifis = unifiData?.wifi_networks || [];
+            if (!wifis.length) { container.innerHTML = '<div class="empty-state">No hay redes WiFi</div>'; return; }
+            
+            let html = '<div class="metrics-grid">' +
+                `<div class="metric-card"><div class="label">SSIDs</div><div class="value blue">${wifis.length}</div><div class="sub">configurados</div></div>` +
+                `<div class="metric-card"><div class="label">Broadcast On</div><div class="value green">${wifis.filter(w => w.broadcast).length}</div><div class="sub">difundiendo</div></div>` +
+                `<div class="metric-card"><div class="label">MAC Filter</div><div class="value yellow">${wifis.filter(w => w.mac_filter && w.mac_filter !== 'disabled').length}</div><div class="sub">activos</div></div>` +
+                '</div>';
+            html += '<table><thead><tr><th>SSID</th><th>Seguridad</th><th>Habilitado</th><th>Broadcast</th><th>Clientes</th><th>Filtro MAC</th></tr></thead><tbody>';
+            wifis.forEach(w => {
+                html += `<tr>
+                    <td><strong>${w.name}</strong></td>
+                    <td>${w.security}</td>
+                    <td>${w.enabled ? '✓' : '✗'}</td>
+                    <td>${w.broadcast ? '✓' : '✗'}</td>
+                    <td>${w.clients || 0}</td>
+                    <td>${w.mac_filter}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        function renderNetworks(container) {
+            const nets = unifiData?.networks || [];
+            if (!nets.length) { container.innerHTML = '<div class="empty-state">No hay redes</div>'; return; }
+            
+            let html = '<div class="metrics-grid">' +
+                `<div class="metric-card"><div class="label">Redes</div><div class="value blue">${nets.length}</div><div class="sub">LAN/VLAN</div></div>` +
+                `<div class="metric-card"><div class="label">DHCP On</div><div class="value green">${nets.filter(n => n.dhcp_enabled).length}</div><div class="sub">habilitadas</div></div>` +
+                '</div>';
+            html += '<table><thead><tr><th>Nombre</th><th>VLAN</th><th>Propósito</th><th>Subred</th><th>Gateway</th><th>DHCP</th><th>Inicio</th><th>Fin</th></tr></thead><tbody>';
+            nets.forEach(n => {
+                html += `<tr>
+                    <td><strong>${n.name}</strong></td>
+                    <td>${n.vlan}</td>
+                    <td>${n.purpose}</td>
+                    <td>${n.subnet}</td>
+                    <td>${n.gateway}</td>
+                    <td>${n.dhcp_enabled ? '✓' : '✗'}</td>
+                    <td>${n.dhcp_start || '-'}</td>
+                    <td>${n.dhcp_stop || '-'}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        function renderPorts(container) {
+            const ports = unifiData?.ports || [];
+            if (!ports.length) { container.innerHTML = '<div class="empty-state">No hay puertos</div>'; return; }
+            
+            let html = '<div class="metrics-grid">' +
+                `<div class="metric-card"><div class="label">Puertos</div><div class="value blue">${ports.length}</div><div class="sub">vistos</div></div>` +
+                `<div class="metric-card"><div class="label">Up</div><div class="value green">${ports.filter(p => p.up).length}</div><div class="sub">activos</div></div>` +
+                `<div class="metric-card"><div class="label">Down</div><div class="value red">${ports.filter(p => !p.up).length}</div><div class="sub">caídos</div></div>` +
+                '</div>';
+            html += '<table><thead><tr><th>Puerto</th><th>Nombre</th><th>Estado</th><th>Velocidad</th><th>Duplex</th><th>RX</th><th>TX</th><th>RX Err</th><th>TX Err</th></tr></thead><tbody>';
+            ports.forEach(p => {
+                html += `<tr>
+                    <td>${p.port_idx}</td>
+                    <td><strong>${p.name}</strong></td>
+                    <td>${p.up ? 'UP' : 'DOWN'}</td>
+                    <td>${p.speed} Mbps</td>
+                    <td>${p.full_duplex ? 'Full' : 'Half'}</td>
+                    <td>${p.rx_bytes}</td>
+                    <td>${p.tx_bytes}</td>
+                    <td>${p.rx_errors || 0}</td>
+                    <td>${p.tx_errors || 0}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        function renderFortiGate() {
+            const section = currentSection['fortigate'];
+            const container = document.getElementById('fortigateContent');
+            
+            switch(section) {
+                case 'interfaces': renderInterfaces(container); break;
+                case 'sdwan': renderSDWAN(container); break;
+                case 'dhcp': renderDHCP(container); break;
+                case 'switches': renderSwitches(container); break;
+                case 'system': renderSystem(container); break;
+            }
+        }
+        
+        function renderInterfaces(container) {
+            const ifaces = fortigateData?.interfaces || [];
+            if (!ifaces.length) { container.innerHTML = '<div class="empty-state">No hay interfaces</div>'; return; }
+            
+            let html = '<table><thead><tr><th>Interfaz</th><th>IP</th><th>Estado</th><th>RX</th><th>TX</th></tr></thead><tbody>';
+            ifaces.forEach(i => {
+                html += `<tr>
+                    <td><strong>${i.name}</strong></td>
+                    <td>${i.ip}</td>
+                    <td><span class="status-badge ${i.status === 'up' ? 'online' : 'offline'}"><span class="dot"></span>${i.status.toUpperCase()}</span></td>
+                    <td>${i.rx_bytes}</td>
+                    <td>${i.tx_bytes}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        function renderSDWAN(container) {
+            const links = fortigateData?.sdwan || [];
+            if (!links.length) { container.innerHTML = '<div class="empty-state">No hay enlaces</div>'; return; }
+            
+            let html = '<div class="metrics-grid">' +
+                `<div class="metric-card"><div class="label">Links</div><div class="value blue">${links.length}</div><div class="sub">SD-WAN</div></div>` +
+                `<div class="metric-card"><div class="label">Up</div><div class="value green">${links.filter(l => l.state === 'Up').length}</div><div class="sub">en línea</div></div>` +
+                `<div class="metric-card"><div class="label">Degraded</div><div class="value yellow">${links.filter(l => (l.sla || 0) < 80 && l.state !== 'Down').length}</div><div class="sub">SLA bajo</div></div>` +
+                `<div class="metric-card"><div class="label">Avg SLA</div><div class="value blue">${Math.round(links.reduce((s, l) => s + (l.sla || 0), 0) / links.length)}%</div><div class="sub">promedio</div></div>` +
+                '</div>';
+            html += '<table><thead><tr><th>Nombre</th><th>Interfaz</th><th>Estado</th><th>Latencia</th><th>Jitter</th><th>Pérdida</th><th>BW In</th><th>BW Out</th><th>BW Bi</th><th>SLA</th></tr></thead><tbody>';
+            links.forEach(l => {
+                const statusClass = l.state === 'Up' ? 'online' : l.state === 'Standby' ? 'warning' : 'offline';
+                const slaClass = l.sla >= 90 ? 'online' : l.sla >= 75 ? 'warning' : 'offline';
+                html += `<tr>
+                    <td><strong>${l.name}</strong></td>
+                    <td>${l.interface}</td>
+                    <td><span class="status-badge ${statusClass}"><span class="dot"></span>${l.state}</span></td>
+                    <td>${l.latency}ms</td>
+                    <td>${l.jitter}ms</td>
+                    <td>${l.packet_loss}%</td>
+                    <td>${formatBandwidth(l.bandwidth_in)}</td>
+                    <td>${formatBandwidth(l.bandwidth_out)}</td>
+                    <td>${formatBandwidth(l.bandwidth_bi)}</td>
+                    <td><span class="status-badge ${slaClass}"><span class="dot"></span>${l.sla}%</span></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        function renderDHCP(container) {
+            const servers = fortigateData?.dhcp || [];
+            if (!servers.length) { container.innerHTML = '<div class="empty-state">No hay servidores DHCP</div>'; return; }
+            
+            let html = '<table><thead><tr><th>Interfaz</th><th>IP Start</th><th>IP End</th><th>Estado</th></tr></thead><tbody>';
+            servers.forEach(s => {
+                html += `<tr>
+                    <td><strong>${s.Interface || 'N/A'}</strong></td>
+                    <td>${s.RangeStart || '-'}</td>
+                    <td>${s.RangeEnd || '-'}</td>
+                    <td>${s.Status || 'Unknown'}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        function renderSwitches(container) {
+            const switches = fortigateData?.switches || [];
+            if (!switches.length) { container.innerHTML = '<div class="empty-state">No hay switches</div>'; return; }
+            
+            let html = '<table><thead><tr><th>Nombre</th><th>Serial</th><th>Modelo</th><th>Estado</th><th>Uptime</th><th>Puertos</th></tr></thead><tbody>';
+            switches.forEach(s => {
+                html += `<tr>
+                    <td><strong>${s.name}</strong></td>
+                    <td>${s.serial}</td>
+                    <td>${s.model}</td>
+                    <td><span class="status-badge ${s.status === 'online' ? 'online' : 'offline'}"><span class="dot"></span>${s.status.toUpperCase()}</span></td>
+                    <td>${s.uptime}</td>
+                    <td>${s.port_count}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        function renderSystem(container) {
+            const sys = fortigateData?.system || {};
+            container.innerHTML = `
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="label">CPU Usage</div>
+                        <div class="value">${sys.cpu_usage || '--'}%</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="label">Memory Usage</div>
+                        <div class="value">${sys.mem_usage || '--'}%</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="label">Sessions</div>
+                        <div class="value blue">${sys.session_count || '--'}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderAdGuard() {
+            const stats = adguardData?.data?.stats || {};
+            const total = stats.num_dns_queries || 0;
+            const blocked = stats.num_blocked_filtering || 0;
+            const pct = total > 0 ? ((blocked / total) * 100).toFixed(1) : 0;
+            
+            document.getElementById('adguardMetrics').innerHTML = `
+                <div class="metric-card">
+                    <div class="label">DNS Queries Total</div>
+                    <div class="value blue">${total.toLocaleString()}</div>
+                    <div class="sub">histórico</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Blocked Total</div>
+                    <div class="value red">${blocked.toLocaleString()}</div>
+                    <div class="sub">histórico</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Block Rate</div>
+                    <div class="value yellow">${pct}%</div>
+                    <div class="sub">tasa bloqueo</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Avg Time</div>
+                    <div class="value green">${(stats.avg_processing_time || 0).toFixed(3)}ms</div>
+                    <div class="sub">por query</div>
+                </div>
+            `;
+        }
+        
+        function renderUCampus() {
+            const data = ucampusData || {};
+            const statusClass = data.status === 'online' ? 'green' : 'red';
+            
+            document.getElementById('ucampusMetrics').innerHTML = `
+                <div class="metric-card">
+                    <div class="label">Estado</div>
+                    <div class="value ${statusClass}">${data.status?.toUpperCase() || 'UNKNOWN'}</div>
+                    <div class="sub">${data.url}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">HTTP Code</div>
+                    <div class="value">${data.status_code || 0}</div>
+                    <div class="sub">código</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Response Time</div>
+                    <div class="value">${data.response_time || 0}ms</div>
+                    <div class="sub">latencia</div>
+                </div>
+                ${data.error ? `<div class="metric-card"><div class="label">Error</div><div class="value red">${data.error}</div></div>` : ''}
+            `;
+        }
+        
+        // Auto-refresh every 15 seconds
+        setInterval(loadData, 15000);
+        loadData();
+    </script>
+</body>
+</html>
