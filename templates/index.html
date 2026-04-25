@@ -882,7 +882,7 @@
             links.forEach((l, i) => {
                 const statusClass = l.state === 'Up' ? 'online' : l.state === 'Standby' ? 'warning' : 'offline';
                 const slaClass = l.sla >= 90 ? 'online' : l.sla >= 75 ? 'warning' : 'offline';
-                html += `<tr onclick="showSDWANDetail(i)" style="cursor:pointer;">
+                html += `<tr onclick="showSDWANDetail(${i})" style="cursor:pointer;">
                     <td><strong>${l.name}</strong></td>
                     <td>${l.interface}</td>
                     <td><span class="status-badge ${statusClass}"><span class="dot"></span>${l.state}</span></td>
