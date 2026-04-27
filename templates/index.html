@@ -630,7 +630,7 @@
                     <td>${ap.avg_signal} dBm</td>
                     <td>${ap.overall_quality}</td>
                     <td><span class="status-badge ${status}"><span class="dot"></span>${status.toUpperCase()}</span></td>
-                ;</tr>';
+                </tr>`;
             });
             apsHtml += '</tbody></table>';
             document.getElementById('overviewAPs').innerHTML = apsHtml;
@@ -643,15 +643,15 @@
                 sdwanHtml += `<tr>
                     <td><strong>${link.name}</strong></td>
                     <td>${link.interface}</td>
-                    <td><span class="status-badge ' + statusClass + '"><span class="dot"></span>${link.state}</span></td>
+                    <td><span class="status-badge ${statusClass}"><span class="dot"></span>${link.state}</span></td>
                     <td>${link.latency}ms</td>
                     <td>${link.jitter}ms</td>
                     <td>${link.packet_loss}%</td>
                     <td>${formatBandwidth(link.bandwidth_in)}</td>
                     <td>${formatBandwidth(link.bandwidth_out)}</td>
                     <td>${formatBandwidth(link.bandwidth_bi)}</td>
-                    <td><span class="status-badge ' + slaClass + '"><span class="dot"></span>${link.sla}%</span></td>
-                ;</tr>';
+                    <td><span class="status-badge ${slaClass}"><span class="dot"></span>${link.sla}%</span></td>
+                </tr>`;
             });
             sdwanHtml += '</tbody></table>';
             document.getElementById('overviewSDWAN').innerHTML = sdwanHtml;
@@ -665,7 +665,7 @@
                     <td>${net.subnet}</td>
                     <td>${net.gateway}</td>
                     <td>${net.dhcp_enabled ? '✓' : '✗'}</td>
-                ;</tr>';
+                </tr>`;
             });
             netHtml += '</tbody></table>';
             document.getElementById('overviewNetworks').innerHTML = netHtml;
@@ -682,7 +682,7 @@
                     <td>${c.channel} (${c.freq})</td>
                     <td>${c.os}</td>
                     <td>${c.wired ? 'Wired' : 'Wireless'}</td>
-                ;</tr>';
+                </tr>`;
             });
             clientHtml += '</tbody></table>';
             document.getElementById('overviewClients').innerHTML = clientHtml;
@@ -727,7 +727,7 @@
                     <td>${ap.avg_signal} dBm</td>
                     <td>${ap.overall_quality}</td>
                     <td><span class="status-badge ${ap.state === 1 ? 'online' : 'offline'}"><span class="dot"></span>${ap.state === 1 ? 'ONLINE' : 'OFFLINE'}</span></td>
-                ;</tr>';
+                </tr>`;
             });
             html += '</tbody></table>';
             container.innerHTML = html;
@@ -755,7 +755,7 @@
                     <td>${c.rx_rate} Mbps</td>
                     <td>${c.os}</td>
                     <td>${c.wired ? 'Wired' : 'Wireless'}</td>
-                ;</tr>';
+                </tr>`;
             });
             html += '</tbody></table>';
             container.innerHTML = html;
@@ -779,7 +779,7 @@
                     <td>${w.broadcast ? '✓' : '✗'}</td>
                     <td>${w.clients || 0}</td>
                     <td>${w.mac_filter}</td>
-                ;</tr>';
+                </tr>`;
             });
             html += '</tbody></table>';
             container.innerHTML = html;
@@ -804,7 +804,7 @@
                     <td>${n.dhcp_enabled ? '✓' : '✗'}</td>
                     <td>${n.dhcp_start || '-'}</td>
                     <td>${n.dhcp_stop || '-'}</td>
-                ;</tr>';
+                </tr>`;
             });
             html += '</tbody></table>';
             container.innerHTML = html;
@@ -831,7 +831,7 @@
                     <td>${p.tx_bytes}</td>
                     <td>${p.rx_errors || 0}</td>
                     <td>${p.tx_errors || 0}</td>
-                ;</tr>';
+                </tr>`;
             });
             html += '</tbody></table>';
             container.innerHTML = html;
@@ -862,7 +862,7 @@
                     <td><span class="status-badge ${i.status === 'up' ? 'online' : 'offline'}"><span class="dot"></span>${i.status.toUpperCase()}</span></td>
                     <td>${i.rx_bytes}</td>
                     <td>${i.tx_bytes}</td>
-                ;</tr>';
+                </tr>`;
             });
             html += '</tbody></table>';
             container.innerHTML = html;
@@ -882,17 +882,18 @@
             links.forEach((l, i) => {
                 const statusClass = l.state === 'Up' ? 'online' : l.state === 'Standby' ? 'warning' : 'offline';
                 const slaClass = l.sla >= 90 ? 'online' : l.sla >= 75 ? 'warning' : 'offline';
-                html += '<tr onclick="showSDWANDetail(' + i + ')" style="cursor:pointer;">\n                    <td><strong>' + l.name + '</strong></td>
-                    <td>' + l.interface + '</td>
-                    <td><span class="status-badge ' + statusClass + '"><span class="dot"></span>' + l.state + '</span></td>
-                    <td>' + l.latency + 'ms</td>
-                    <td>' + l.jitter + 'ms</td>
-                    <td>' + l.packet_loss + '%</td>
-                    <td>' + formatBandwidth(l.bandwidth_in) + '</td>
-                    <td>' + formatBandwidth(l.bandwidth_out) + '</td>
-                    <td>' + formatBandwidth(l.bandwidth_bi) + '</td>
-                    <td><span class="status-badge ' + slaClass + '"><span class="dot"></span>' + l.sla + '%</span></td>
-                </tr>;
+                html += `<tr onclick="showSDWANDetail(${i})" style="cursor:pointer;">
+                    <td><strong>${l.name}</strong></td>
+                    <td>${l.interface}</td>
+                    <td><span class="status-badge ${statusClass}"><span class="dot"></span>${l.state}</span></td>
+                    <td>${l.latency}ms</td>
+                    <td>${l.jitter}ms</td>
+                    <td>${l.packet_loss}%</td>
+                    <td>${formatBandwidth(l.bandwidth_in)}</td>
+                    <td>${formatBandwidth(l.bandwidth_out)}</td>
+                    <td>${formatBandwidth(l.bandwidth_bi)}</td>
+                    <td><span class="status-badge ${slaClass}"><span class="dot"></span>${l.sla}%</span></td>
+                </tr>`;
             });
             html += '</tbody></table>';
             container.innerHTML = html;
@@ -933,7 +934,7 @@
                     <td>${s.RangeStart || '-'}</td>
                     <td>${s.RangeEnd || '-'}</td>
                     <td>${s.Status || 'Unknown'}</td>
-                ;</tr>';
+                </tr>`;
             });
             html += '</tbody></table>';
             container.innerHTML = html;
@@ -952,7 +953,7 @@
                     <td><span class="status-badge ${s.status === 'online' ? 'online' : 'offline'}"><span class="dot"></span>${s.status.toUpperCase()}</span></td>
                     <td>${s.uptime}</td>
                     <td>${s.port_count}</td>
-                ;</tr>';
+                </tr>`;
             });
             html += '</tbody></table>';
             container.innerHTML = html;
@@ -1015,7 +1016,7 @@
             document.getElementById('ucampusMetrics').innerHTML = `
                 <div class="metric-card">
                     <div class="label">Estado</div>
-                    <div class="value ' + statusClass + '">${data.status?.toUpperCase() || 'UNKNOWN'}</div>
+                    <div class="value ${statusClass}">${data.status?.toUpperCase() || 'UNKNOWN'}</div>
                     <div class="sub">${data.url}</div>
                 </div>
                 <div class="metric-card">
