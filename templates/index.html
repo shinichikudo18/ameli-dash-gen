@@ -366,11 +366,11 @@
     
     <div class="container">
         <div class="nav-tabs">
-            <button class="nav-tab active" onclick="switchTab('overview')">📊 RESUMEN</button>
-            <button class="nav-tab" onclick="switchTab('unifi')">📡 UNIFI</button>
-            <button class="nav-tab" onclick="switchTab('fortigate')">🛡️ FORTIGATE</button>
-            <button class="nav-tab" onclick="switchTab('adguard')">🔒 ADGUARD</button>
-            <button class="nav-tab" onclick="switchTab('ucampus')">🌐 UCAMPUS</button>
+            <button class="nav-tab active" onclick="switchTab('overview', event)">📊 RESUMEN</button>
+            <button class="nav-tab" onclick="switchTab('unifi', event)">📡 UNIFI</button>
+            <button class="nav-tab" onclick="switchTab('fortigate', event)">🛡️ FORTIGATE</button>
+            <button class="nav-tab" onclick="switchTab('adguard', event)">🔒 ADGUARD</button>
+            <button class="nav-tab" onclick="switchTab('ucampus', event)">🌐 UCAMPUS</button>
         </div>
         
         <!-- RESUMEN NOC VIEW -->
@@ -412,11 +412,11 @@
                 <div class="section-header">
                     <div class="section-title">📡 UNIFI CONTROLLER</div>
                     <div class="section-tabs">
-                        <button class="section-tab active" onclick="switchSection('unifi', 'aps')">APs</button>
-                        <button class="section-tab" onclick="switchSection('unifi', 'clients')">Clientes</button>
-                        <button class="section-tab" onclick="switchSection('unifi', 'wifi')">WiFi</button>
-                        <button class="section-tab" onclick="switchSection('unifi', 'networks')">VLANs</button>
-                        <button class="section-tab" onclick="switchSection('unifi', 'ports')">Puertos</button>
+                        <button class="section-tab active" onclick="switchSection('unifi', 'aps', event)">APs</button>
+                        <button class="section-tab" onclick="switchSection('unifi', 'clients', event)">Clientes</button>
+                        <button class="section-tab" onclick="switchSection('unifi', 'wifi', event)">WiFi</button>
+                        <button class="section-tab" onclick="switchSection('unifi', 'networks', event)">VLANs</button>
+                        <button class="section-tab" onclick="switchSection('unifi', 'ports', event)">Puertos</button>
                     </div>
                 </div>
                 <div class="section-body" id="unifiContent"></div>
@@ -429,11 +429,11 @@
                 <div class="section-header">
                     <div class="section-title">🛡️ FORTIGATE FIREWALL</div>
                     <div class="section-tabs">
-                        <button class="section-tab active" onclick="switchSection('fortigate', 'interfaces')">Interfaces</button>
-                        <button class="section-tab" onclick="switchSection('fortigate', 'sdwan')">SD-WAN</button>
-                        <button class="section-tab" onclick="switchSection('fortigate', 'dhcp')">DHCP</button>
-                        <button class="section-tab" onclick="switchSection('fortigate', 'switches')">Switches</button>
-                        <button class="section-tab" onclick="switchSection('fortigate', 'system')">Sistema</button>
+                        <button class="section-tab active" onclick="switchSection('fortigate', 'interfaces', event)">Interfaces</button>
+                        <button class="section-tab" onclick="switchSection('fortigate', 'sdwan', event)">SD-WAN</button>
+                        <button class="section-tab" onclick="switchSection('fortigate', 'dhcp', event)">DHCP</button>
+                        <button class="section-tab" onclick="switchSection('fortigate', 'switches', event)">Switches</button>
+                        <button class="section-tab" onclick="switchSection('fortigate', 'system', event)">Sistema</button>
                     </div>
                 </div>
                 <div class="section-body" id="fortigateContent"></div>
@@ -491,20 +491,20 @@
             }
         }
         
-        function switchTab(tab) {
+        function switchTab(tab, ev) {
             currentMainTab = tab;
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
+            (ev || window.event).target.classList.add('active');
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.getElementById(tab + 'Tab').classList.add('active');
             renderCurrentTab();
         }
         
-        function switchSection(main, section) {
+        function switchSection(main, section, ev) {
             currentSection[main] = section;
             const tab = document.getElementById(main + 'Tab');
             tab.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
+            (ev || window.event).target.classList.add('active');
             renderCurrentTab();
         }
 
